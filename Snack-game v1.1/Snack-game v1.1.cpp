@@ -3,20 +3,9 @@
 #include <ctime> 
 #include <windows.h>
 #include <conio.h>
+#include <vector>
 
 using namespace std;
-
-void gotoXY(int x, int y) {
-    COORD pos = { (SHORT)x, (SHORT)y };
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-}
-
-
-bool stopGame = 0;
-int generateRandomNum()
-{
-    return rand();
-}
 
 void hideCursor() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -27,33 +16,88 @@ void hideCursor() {
     SetConsoleCursorInfo(hConsole, &cursorInfo);
 }
 
+void gotoXY(int x, int y) {
+    COORD pos = { (SHORT)x, (SHORT)y };
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+
+int generateRandomNum()
+{
+    return rand();
+}
+
+bool stopGame = 0;
+bool looser = 0;
 
 class Player
 {
 private:
-    int pX = 0;
-    int pY = 0;
     char dirs[4] = { 't', 'd', 'r', 'l' };
     char dir; // top: t, down: d, right: r, left: l
     int score = 0;
+    vector<pair<int, int>> snakeBody;
+
+    void changePlayerPositionBy(int x, int y)
+    {
+		snakeBody[0].first += x;
+        snakeBody[0].second += y;
+    }
 
 public:
     Player(int x, int y)
     {
-        this->pX = x;
-        this->pY = y;
-        // generate randome number from 0 to 4;
+		snakeBody.push_back({ x, y });
+        // generate randome number from 0 to 3;
         dir = dirs[generateRandomNum() % 4];
-    }
-
-    void changePlayerPositionBy(int x, int y)
-    {
-        this->pX += x;
-        this->pY += y;
     }
 
     void changePlayerScore(int n) {
         this->score += n;
+    }
+
+    void movePlayer()
+    {
+		pair <int, int> prevPos = snakeBody[0];
+        for (int i = 0; i < snakeBody.size(); i++)
+        {
+            if (i == 0) {
+                switch (dir)
+                {
+                case 't':
+                    changePlayerPositionBy(0, -1);
+                    break;
+                case 'd':
+                    changePlayerPositionBy(0, 1);
+                    break;
+                case 'r':
+                    changePlayerPositionBy(1, 0);
+                    break;
+                case 'l':
+                    changePlayerPositionBy(-1, 0);
+                    break;
+                }
+            } else {
+                pair<int, int> temp = snakeBody[i];
+                snakeBody[i] = prevPos;
+                prevPos = temp;
+            }
+        }
+
+    }
+
+    void increamentSnakeBody() {
+        snakeBody.push_back({0, 0});
+	}
+
+    void checkSnakeBodyColl() {
+		pair<int, int> headPos = snakeBody[0];
+        for (int i = 1; i < snakeBody.size(); i++)
+        {
+            if(headPos.first == snakeBody[i].first &&
+               headPos.second == snakeBody[i].second) {
+                looser = 1;
+			}
+        }
     }
 
     void setPlayerDir(char c) {
@@ -62,12 +106,12 @@ public:
 
     int getPlayerXPos()
     {
-        return this->pX;
+        return snakeBody[0].first;
     }
 
     int getPlayerYPos()
     {
-        return this->pY;
+        return snakeBody[0].second;
     }
 
     int getPlayerScore()
@@ -79,26 +123,13 @@ public:
     {
         return this->dir;
     }
-};
 
-void movePlayer(Player* p)
-{
-    switch (p->getPlayerDir())
+    vector<pair<int, int>> getSnakeBody()
     {
-    case 't':
-        p->changePlayerPositionBy(0, -1);
-        break;
-    case 'd':
-        p->changePlayerPositionBy(0, 1);
-        break;
-    case 'r':
-        p->changePlayerPositionBy(1, 0);
-        break;
-    case 'l':
-        p->changePlayerPositionBy(-1, 0);
-        break;
-    }
-}
+        return this->snakeBody;
+	}
+
+};
 
 void input(Player* p)
 {
@@ -118,15 +149,19 @@ void input(Player* p)
             switch (arrow)
             {
             case 72: // up arrow
+				if (p->getPlayerDir() != 'd') // prevent reverse direction
                 p->setPlayerDir('t');
                 break;
             case 80: // down arrow
+                if (p->getPlayerDir() != 't') // prevent reverse direction
                 p->setPlayerDir('d');
                 break;
             case 75: // left arrow
+                if (p->getPlayerDir() != 'r') // prevent reverse direction
                 p->setPlayerDir('l');
                 break;
             case 77: // right arrow
+                if (p->getPlayerDir() != 'l') // prevent reverse direction
                 p->setPlayerDir('r');
                 break;
             }
@@ -139,7 +174,6 @@ class Screen
 private:
     int height;
     int width;
-    bool looser = 0;
     int fruitXPos;
     int fruitYPos;
     Player* player;
@@ -184,8 +218,12 @@ private:
     }
 
     void drawPlayer() {
-        gotoXY(player->getPlayerXPos(), player->getPlayerYPos());
-        cout << "O";   // erase
+		vector<pair<int, int>> snakeBody = player->getSnakeBody();
+        for (int i = 0; i < snakeBody.size(); i++)
+        {
+            gotoXY(snakeBody[i].first, snakeBody[i].second);
+            cout << "O"; // draw player
+        }
     }
 
     void checkFruit() {
@@ -193,6 +231,7 @@ private:
         if (player->getPlayerXPos() == fruitXPos &&
             player->getPlayerYPos() == fruitYPos) {
             player->changePlayerScore(1);
+			player->increamentSnakeBody();
             // remove previous fruit
             gotoXY(fruitXPos, fruitYPos);
             cout << " ";   // erase fruit
@@ -216,8 +255,12 @@ private:
     }
 
     void deletePlayer() {
-        gotoXY(player->getPlayerXPos(), player->getPlayerYPos());
-        cout << " ";   // erase
+        vector<pair<int, int>> snakeBody = player->getSnakeBody();
+        for (int i = 0; i < snakeBody.size(); i++)
+        {
+            gotoXY(snakeBody[i].first, snakeBody[i].second);
+            cout << " ";   // erase
+        }
     }
 
     void looserMessage() {
@@ -257,12 +300,13 @@ public:
     {
         frameDraw();
         drawFruit();
-        for (int i = 0; i < 50; i++)
+        for (int i = 0; i < 300; i++)
         {
             // system("cls"); // very slow
             if (stopGame) break;
             checkFruit();
             checkBorders();
+            player->checkSnakeBodyColl();
             if (looser) break;
             input(player);
             drawPlayer();
@@ -270,7 +314,7 @@ public:
             Sleep(200);
             updateScore();
             deletePlayer();
-            movePlayer(player);
+            player->movePlayer();
         }
         // move cursor to bottom
         gotoXY(0, height + 2);
@@ -286,9 +330,12 @@ public:
 int main() {
     hideCursor();
     srand(time(0));
+
+    // screen size
     int h, w;
     h = 15;
     w = 50;
+
     // player
     int px = w / 2;
     int py = h / 2;

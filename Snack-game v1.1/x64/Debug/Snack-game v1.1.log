@@ -1,4 +1,4 @@
 ﻿  Snack-game v1.1.cpp
-E:\Programming\Mohamed Moshrif course\Projects\Snack-game v1.1\Snack-game v1.1\Snack-game v1.1\Snack-game v1.1.cpp(117,18): warning C4101: 'c': unreferenced local variable
-E:\Programming\Mohamed Moshrif course\Projects\Snack-game v1.1\Snack-game v1.1\Snack-game v1.1\Snack-game v1.1.cpp(288,15): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-  Snack-game v1.1.vcxproj -> E:\Programming\Mohamed Moshrif course\Projects\Snack-game v1.1\Snack-game v1.1\x64\Debug\Snack-game v1.1.exe
+E:\Programming\Mohamed Moshrif course\Projects\Snake-game v1.1\Snack-game v1.1\Snack-game v1.1\Snack-game v1.1.cpp(149,18): warning C4101: 'c': unreferenced local variable
+E:\Programming\Mohamed Moshrif course\Projects\Snake-game v1.1\Snack-game v1.1\Snack-game v1.1\Snack-game v1.1.cpp(333,15): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Snack-game v1.1.vcxproj -> E:\Programming\Mohamed Moshrif course\Projects\Snake-game v1.1\Snack-game v1.1\x64\Debug\Snack-game v1.1.exe
